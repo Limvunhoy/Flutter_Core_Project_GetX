@@ -45,51 +45,82 @@ class ApiBaseHelper {
   static final dio = createDio();
   static final baseAPI = addInterceptors(dio);
 
-  Future<Response> getHTTP(String url) async {
+  Future<Response> get(String url) async {
     try {
       Response response = await baseAPI.get(url);
       return response;
-    } on DioError catch (e) {
-      return _onHandleError(e);
+    } catch (e) {
+      return _handleError(e);
     }
   }
 
-  Future<Response> postHTTP(String url, dynamic data) async {
+  Future<Response> post(String url, dynamic data) async {
     try {
       Response response = await baseAPI.post(url, data: data);
       return response;
     } catch (e) {
-      return _onHandleError(e);
+      return _handleError(e);
     }
   }
 
-  Future<Response> putHTTP(String url, dynamic data) async {
+  Future<Response> put(String url, dynamic data) async {
     try {
       Response response = await baseAPI.put(url, data: data);
       return response;
     } catch (e) {
-      return _onHandleError(e);
+      return _handleError(e);
     }
   }
 
-  Future<Response> deleteHTTP(String url) async {
+  Future<Response> delete(String url) async {
     try {
       Response response = await baseAPI.delete(url);
       return response;
     } catch (e) {
-      return _onHandleError(e);
+      return _handleError(e);
     }
   }
 
-  dynamic _onHandleError(exp) {
-    print(exp);
-    if (exp.error is SocketException) {
-      Fluttertoast.showToast(msg: "No Internet Connection");
-    } else if (exp.error is TypeError) {
-      throw exp.response.data;
+  dynamic _handleError(error) {
+    dynamic errorResponse;
+
+    if (error is DioError) {
+      DioError dioError = error;
+      switch (dioError.type) {
+        case DioErrorType.cancel:
+          errorResponse = "Request to API server was cancelled";
+          break;
+        case DioErrorType.connectTimeout:
+          errorResponse = "Connection timeout with API server";
+          break;
+        case DioErrorType.sendTimeout:
+          errorResponse = "Send timeout in connection with API server";
+          break;
+        case DioErrorType.receiveTimeout:
+          errorResponse = "Receive timeout in connection with API server";
+          break;
+        case DioErrorType.response:
+          errorResponse = dioError.response!.data;
+          break;
+        case DioErrorType.other:
+          errorResponse = "Something went wrong";
+          break;
+      }
     } else {
-      print(exp.response.data);
-      throw "Unexpected Error Occur!";
+      errorResponse = "Unexpected error occured";
     }
+    return errorResponse;
   }
+
+  // dynamic _onHandleError(exp) {
+  //   print(exp);
+  //   if (exp.error is SocketException) {
+  //     Fluttertoast.showToast(msg: "No Internet Connection");
+  //   } else if (exp.error is TypeError) {
+  //     throw exp.response.data;
+  //   } else {
+  //     print(exp.response.data);
+  //     throw "Unexpected Error Occur!";
+  //   }
+  // }
 }
